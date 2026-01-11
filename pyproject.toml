@@ -1,0 +1,76 @@
+[project]
+name = "coursework-4"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Aleksey Lozhkin",email = "aleksey.s.lozhkin@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django (>=6.0.1,<7.0.0)",
+    "python-dotenv (>=1.2.1,<2.0.0)",
+    "psycopg2-binary (>=2.9.11,<3.0.0)",
+    "pillow (>=12.1.0,<13.0.0)",
+    "ipython (>=9.9.0,<10.0.0)"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.lint.dependencies]
+flake8 = "^7.3.0"
+mypy = "^1.17.0"
+black = "^25.1.0"
+isort = "^6.0.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+pytest-cov = "^6.2.1"
+types-psycopg2 = "^2.9.21.20251012"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+show_error_codes = true
+exclude = "venv/|.venv/|build/|dist/|.mypy_cache/"
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[tool.black]
+line-length = 119
+skip-string-normalization = true
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 119
+skip = [".venv", "venv"]
+
+[tool.poetry.scripts]
+export-requirements = "poetry export -f requirements.txt --output requirements.txt --without-hashes"
+
+[tool.pytest.ini_options]
+addopts = "--cov=src --cov-report=html --cov-report=term --cov-fail-under=80"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
