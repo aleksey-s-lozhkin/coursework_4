@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<p>Здравствуйте, {{ user.email }}!</p>
+<p>Для подтверждения email перейдите по ссылке:</p>
+<p><a href="http://{{ domain }}{% url 'users:verify_email' token=token %}">Подтвердить email</a></p>
+</body>
+</html>
