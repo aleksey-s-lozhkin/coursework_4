@@ -213,3 +213,6 @@ __marimo__/
 #data/vacancies.json
 
 data/
+
+# Email files for development
+sent_emails/

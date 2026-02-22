@@ -1,0 +1,32 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ru" class="h-100">
+<head>
+    <title>{% block title %}Корпоративный сайт{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS (локальный) -->
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body class="d-flex flex-column h-100">
+    <!-- Подключаем header -->
+    {% include "includes/header.html" %}
+
+    <!-- Основной контент (будет расширяться) -->
+    <main class="flex-shrink-0">
+        <div class="container">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+    <!-- Подключаем footer (всегда внизу) -->
+    <footer class="bg-dark text-white-50 py-4 mt-auto">
+        {% include "includes/footer.html" %}
+    </footer>
+
+    <!-- Bootstrap JS (локальный) -->
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

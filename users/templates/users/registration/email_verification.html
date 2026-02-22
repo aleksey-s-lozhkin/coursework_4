@@ -1,12 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #0d6efd;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #0b5ed7;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .warning {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .link-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-family: monospace;
+        }
+    </style>
 </head>
 <body>
-<p>Здравствуйте, {{ user.email }}!</p>
-<p>Для подтверждения email перейдите по ссылке:</p>
-<p><a href="http://{{ domain }}{% url 'users:verify_email' token=token %}">Подтвердить email</a></p>
+    <div class="container">
+        <div class="header">
+            <h1>Подтверждение email</h1>
+        </div>
+
+        <div class="content">
+            <p>Здравствуйте, <strong>{{ user.email }}</strong>!</p>
+
+            <p>Благодарим вас за регистрацию на нашем сайте. Для завершения регистрации
+               пожалуйста подтвердите ваш email адрес, нажав на кнопку ниже:</p>
+
+            <div style="text-align: center;">
+                <a href="{{ protocol }}://{{ domain }}{% url 'users:verify_email' token=token %}"
+                   class="button">
+                    Подтвердить email
+                </a>
+            </div>
+
+            <p>Если кнопка не работает, скопируйте и вставьте следующую ссылку в адресную строку браузера:</p>
+
+            <div class="link-box">
+                {{ protocol }}://{{ domain }}{% url 'users:verify_email' token=token %}
+            </div>
+
+            <div class="warning">
+                <strong>Важно:</strong> Ссылка действительна в течение 24 часов.
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Это автоматическое письмо, пожалуйста, не отвечайте на него.</p>
+            <p>Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.</p>
+            <p>© {% now "Y" %} BriefPost. Все права защищены.</p>
+        </div>
+    </div>
 </body>
 </html>

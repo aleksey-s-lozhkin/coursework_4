@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Клиент: {{ client.full_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Клиент: {{ client.full_name }}</h1>
+    <div>
+        {% if client.owner == user %}
+            <a href="{% url 'clients:update' client.pk %}" class="btn btn-warning">Редактировать</a>
+            <a href="{% url 'clients:delete' client.pk %}" class="btn btn-danger">Удалить</a>
+        {% endif %}
+        <a href="{% url 'clients:list' %}" class="btn btn-secondary">Назад к списку</a>
+        <a href="{% url 'users:home' %}" class="btn btn-outline-primary">На главную</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr>
+                <th style="width: 200px;">Email</th>
+                <td>{{ client.email }}</td>
+            </tr>
+            <tr>
+                <th>ФИО</th>
+                <td>{{ client.full_name }}</td>
+            </tr>
+            <tr>
+                <th>Комментарий</th>
+                <td>{{ client.comment|linebreaks }}</td>
+            </tr>
+            <tr>
+                <th>Владелец</th>
+                <td>{{ client.owner.email }}</td>
+            </tr>
+            <tr>
+                <th>Дата создания</th>
+                <td>{{ client.created_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+            <tr>
+                <th>Последнее обновление</th>
+                <td>{{ client.updated_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<h2 class="mt-4">Рассылки для этого клиента</h2>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Статус</th>
+                <th>Периодичность</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mailing in client.mailings.all %}
+            <tr>
+                <td>{{ mailing.message.subject }}</td>  <!-- Удалите комментарий в HTML -->
+                <td>
+                    {% if mailing.status == 'started' %}
+                        <span class="badge bg-success">Запущена</span>
+                    {% elif mailing.status == 'completed' %}
+                        <span class="badge bg-secondary">Завершена</span>
+                    {% elif mailing.status == 'disabled' %}
+                        <span class="badge bg-danger">Отключена</span>
+                    {% else %}
+                        <span class="badge bg-warning">Создана</span>
+                    {% endif %}
+                </td>
+                <td>{{ mailing.get_frequency_display }}</td>
+                <td>
+                    <a href="{% url 'mailings:detail' mailing.pk %}" class="btn btn-sm btn-info">Просмотр</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">Нет рассылок для этого клиента</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

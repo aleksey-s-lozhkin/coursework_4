@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Мой профиль{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Мой профиль</h4>
+                <a href="{% url 'users:profile-edit' %}" class="btn btn-light btn-sm">
+                    Редактировать профиль
+                </a>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <table class="table table-hover">
+                            <tr>
+                                <th style="width: 200px;" class="bg-light">Email:</th>
+                                <td>{{ profile.user.email }}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Имя:</th>
+                                <td>{{ profile.user.first_name|default:"Не указано" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Фамилия:</th>
+                                <td>{{ profile.user.last_name|default:"Не указано" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Телефон:</th>
+                                <td>{{ profile.user.phone|default:"Не указан" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Страна:</th>
+                                <td>
+                                    {% if profile.user.country %}
+                                        {% if profile.user.country == 'RU' %}Россия
+                                        {% elif profile.user.country == 'BY' %}Беларусь
+                                        {% elif profile.user.country == 'KZ' %}Казахстан
+                                        {% elif profile.user.country == 'UA' %}Украина
+                                        {% elif profile.user.country == 'AM' %}Армения
+                                        {% elif profile.user.country == 'GE' %}Грузия
+                                        {% elif profile.user.country == 'other' %}Другая
+                                        {% else %}{{ profile.user.country }}
+                                        {% endif %}
+                                    {% else %}
+                                        Не указана
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Статус email:</th>
+                                <td>
+                                    {% if profile.user.is_email_verified %}
+                                        <span class="badge bg-success">Подтвержден</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Не подтвержден</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Роль:</th>
+                                <td>
+                                    {% if profile.user.is_superuser %}
+                                        <span class="badge bg-danger">Администратор</span>
+                                    {% elif profile.user.is_manager %}
+                                        <span class="badge bg-primary">Менеджер</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Пользователь</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Дата регистрации:</th>
+                                <td>{{ profile.user.date_joined|date:"d.m.Y H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Последний вход:</th>
+                                <td>{{ profile.user.last_login|date:"d.m.Y H:i"|default:"Никогда" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Кнопка "На главную" внизу страницы (дублер) -->
+                <div class="mt-3 text-center">
+                    <a href="{% url 'users:home' %}" class="btn btn-primary">
+                        <i class="bi bi-house-door"></i> На главную
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

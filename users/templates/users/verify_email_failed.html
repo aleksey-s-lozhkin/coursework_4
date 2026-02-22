@@ -1,10 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ошибка подтверждения</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+        }
+        .error-icon {
+            color: #f44336;
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #1976D2;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <div class="error-icon">✗</div>
+        <h1>Ошибка подтверждения email</h1>
 
+        <div class="warning-box">
+            {% if message %}
+                {{ message }}
+            {% else %}
+                Ссылка для подтверждения недействительна или истекла.
+            {% endif %}
+        </div>
+
+        <p>Возможные причины:</p>
+        <ul style="text-align: left; color: #666;">
+            <li>Ссылка уже была использована ранее</li>
+            <li>Срок действия ссылки истек (24 часа)</li>
+            <li>Был изменен email адрес</li>
+        </ul>
+
+        <p>Что делать дальше:</p>
+        <a href="{% url 'users:login' %}" class="btn">Войти в аккаунт</a>
+        <a href="{% url 'users:register' %}" class="btn btn-secondary">Зарегистрироваться снова</a>
+    </div>
 </body>
 </html>
