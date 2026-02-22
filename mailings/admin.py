@@ -58,6 +58,7 @@ class MailingAdmin(admin.ModelAdmin):
 
     def get_frequency_display(self, obj):
         return dict(Mailing.FREQUENCY_CHOICES).get(obj.frequency, '—')
+
     get_frequency_display.short_description = 'Периодичность'
 
 

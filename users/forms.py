@@ -1,17 +1,15 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import User, Profile
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+
+from .models import User
 
 
 class RegistrationForm(UserCreationForm):
-    email = forms.EmailField(
-        required=True,
-        widget=forms.EmailInput(attrs={'class': 'form-control'})
-    )
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
     phone = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7 (999) 999-99-99'}),
-        label='Телефон'
+        label='Телефон',
     )
     country = forms.ChoiceField(
         required=False,
@@ -26,15 +24,11 @@ class RegistrationForm(UserCreationForm):
             ('other', 'Другая'),
         ],
         widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Страна'
+        label='Страна',
     )
-    password1 = forms.CharField(
-        label='Пароль',
-        widget=forms.PasswordInput(attrs={'class': 'form-control'})
-    )
+    password1 = forms.CharField(label='Пароль', widget=forms.PasswordInput(attrs={'class': 'form-control'}))
     password2 = forms.CharField(
-        label='Подтверждение пароля',
-        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+        label='Подтверждение пароля', widget=forms.PasswordInput(attrs={'class': 'form-control'})
     )
 
     class Meta:
@@ -53,13 +47,12 @@ class RegistrationForm(UserCreationForm):
 
 class LoginForm(AuthenticationForm):
     """Форма входа в систему"""
+
     username = forms.EmailField(
-        label='Email',
-        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'})
+        label='Email', widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'})
     )
     password = forms.CharField(
-        label='Пароль',
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Пароль'})
+        label='Пароль', widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Пароль'})
     )
 
 
@@ -68,13 +61,10 @@ class UserUpdateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'phone', 'country']  # email убрали
+        fields = ['first_name', 'last_name', 'phone', 'country']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Введите имя'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Введите фамилию'}),
-            'phone': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': '+7 (999) 999-99-99'
-            }),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7 (999) 999-99-99'}),
             'country': forms.Select(attrs={'class': 'form-control'}),
         }

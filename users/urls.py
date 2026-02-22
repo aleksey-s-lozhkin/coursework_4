@@ -1,4 +1,5 @@
 from django.urls import path
+
 from . import views
 
 app_name = 'users'
@@ -6,6 +7,7 @@ app_name = 'users'
 urlpatterns = [
     # Корень
     path('', views.RootRedirectView.as_view(), name='root'),
+
     # Главная
     path('home/', views.HomeView.as_view(), name='home'),
 
@@ -21,13 +23,19 @@ urlpatterns = [
 
     # Сброс пароля
     path('password-reset/', views.CustomPasswordResetView.as_view(), name='password_reset'),
-    path('password-reset/done/', views.CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
+    path(
+        'password-reset/done/',
+        views.CustomPasswordResetDoneView.as_view(),
+        name='password_reset_done'),
     path(
         'password-reset/<uidb64>/<token>/',
         views.CustomPasswordResetConfirmView.as_view(),
         name='password_reset_confirm',
     ),
-    path('password-reset/complete/', views.CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
+    path(
+        'password-reset/complete/',
+        views.CustomPasswordResetCompleteView.as_view(),
+        name='password_reset_complete'),
 
     # Управление пользователями (для менеджеров)
     path('users/', views.UserListView.as_view(), name='user_list'),

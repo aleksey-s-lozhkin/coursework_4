@@ -5,7 +5,6 @@ from pathlib import Path
 import certifi
 from dotenv import load_dotenv
 
-
 os.environ['SSL_CERT_FILE'] = certifi.where()
 ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=certifi.where())
 
@@ -112,7 +111,7 @@ LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' # Для отладки
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Для отладки
 # EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend') # Для прода
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.yandex.ru')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 465))

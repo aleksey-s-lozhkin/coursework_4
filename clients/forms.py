@@ -1,5 +1,6 @@
-from django.core.exceptions import ValidationError
 from django import forms
+from django.core.exceptions import ValidationError
+
 from .models import Client
 
 
@@ -36,10 +37,7 @@ class ClientForm(forms.ModelForm):
 
             if owner:
                 # Проверяем существование клиента с таким email
-                existing = Client.objects.filter(
-                    email__iexact=email,
-                    owner=owner
-                )
+                existing = Client.objects.filter(email__iexact=email, owner=owner)
 
                 if self.instance.pk:
                     existing = existing.exclude(pk=self.instance.pk)

@@ -14,12 +14,12 @@
             </div>
             <div class="card-body">
                 {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
                 {% endif %}
 
                 <div class="row">
@@ -45,17 +45,17 @@
                                 <th class="bg-light">Страна:</th>
                                 <td>
                                     {% if profile.user.country %}
-                                        {% if profile.user.country == 'RU' %}Россия
-                                        {% elif profile.user.country == 'BY' %}Беларусь
-                                        {% elif profile.user.country == 'KZ' %}Казахстан
-                                        {% elif profile.user.country == 'UA' %}Украина
-                                        {% elif profile.user.country == 'AM' %}Армения
-                                        {% elif profile.user.country == 'GE' %}Грузия
-                                        {% elif profile.user.country == 'other' %}Другая
-                                        {% else %}{{ profile.user.country }}
-                                        {% endif %}
+                                    {% if profile.user.country == 'RU' %}Россия
+                                    {% elif profile.user.country == 'BY' %}Беларусь
+                                    {% elif profile.user.country == 'KZ' %}Казахстан
+                                    {% elif profile.user.country == 'UA' %}Украина
+                                    {% elif profile.user.country == 'AM' %}Армения
+                                    {% elif profile.user.country == 'GE' %}Грузия
+                                    {% elif profile.user.country == 'other' %}Другая
+                                    {% else %}{{ profile.user.country }}
+                                    {% endif %}
                                     {% else %}
-                                        Не указана
+                                    Не указана
                                     {% endif %}
                                 </td>
                             </tr>
@@ -63,9 +63,9 @@
                                 <th class="bg-light">Статус email:</th>
                                 <td>
                                     {% if profile.user.is_email_verified %}
-                                        <span class="badge bg-success">Подтвержден</span>
+                                    <span class="badge bg-success">Подтвержден</span>
                                     {% else %}
-                                        <span class="badge bg-warning text-dark">Не подтвержден</span>
+                                    <span class="badge bg-warning text-dark">Не подтвержден</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -73,11 +73,11 @@
                                 <th class="bg-light">Роль:</th>
                                 <td>
                                     {% if profile.user.is_superuser %}
-                                        <span class="badge bg-danger">Администратор</span>
+                                    <span class="badge bg-danger">Администратор</span>
                                     {% elif profile.user.is_manager %}
-                                        <span class="badge bg-primary">Менеджер</span>
+                                    <span class="badge bg-primary">Менеджер</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">Пользователь</span>
+                                    <span class="badge bg-secondary">Пользователь</span>
                                     {% endif %}
                                 </td>
                             </tr>

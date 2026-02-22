@@ -1,12 +1,12 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
-from django.core.cache import cache
 
 from .forms import ClientForm
 from .models import Client
@@ -14,6 +14,7 @@ from .models import Client
 
 class ClientListView(LoginRequiredMixin, ListView):
     """Список клиентов с кешированием"""
+
     model = Client
     template_name = 'clients/client_list.html'
     context_object_name = 'clients'
@@ -39,6 +40,7 @@ class ClientListView(LoginRequiredMixin, ListView):
 
 class ClientDetailView(LoginRequiredMixin, DetailView):
     """Детальная информация о клиенте с кешированием"""
+
     model = Client
     template_name = 'clients/client_detail.html'
     context_object_name = 'client'
@@ -72,6 +74,7 @@ class ClientDetailView(LoginRequiredMixin, DetailView):
 @method_decorator(never_cache, name='dispatch')
 class ClientCreateView(LoginRequiredMixin, CreateView):
     """Создание клиента"""
+
     model = Client
     form_class = ClientForm
     template_name = 'clients/client_form.html'
@@ -92,6 +95,7 @@ class ClientCreateView(LoginRequiredMixin, CreateView):
 
 class ClientUpdateView(LoginRequiredMixin, UpdateView):
     """Редактирование клиента"""
+
     model = Client
     form_class = ClientForm
     template_name = 'clients/client_form.html'
@@ -121,6 +125,7 @@ class ClientUpdateView(LoginRequiredMixin, UpdateView):
 
 class ClientDeleteView(LoginRequiredMixin, DeleteView):
     """Удаление клиента"""
+
     model = Client
     template_name = 'clients/client_confirm_delete.html'
     success_url = reverse_lazy('clients:list')

@@ -67,40 +67,40 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Подтверждение email</h1>
+<div class="container">
+    <div class="header">
+        <h1>Подтверждение email</h1>
+    </div>
+
+    <div class="content">
+        <p>Здравствуйте, <strong>{{ user.email }}</strong>!</p>
+
+        <p>Благодарим вас за регистрацию на нашем сайте. Для завершения регистрации
+            пожалуйста подтвердите ваш email адрес, нажав на кнопку ниже:</p>
+
+        <div style="text-align: center;">
+            <a href="{{ protocol }}://{{ domain }}{% url 'users:verify_email' token=token %}"
+               class="button">
+                Подтвердить email
+            </a>
         </div>
 
-        <div class="content">
-            <p>Здравствуйте, <strong>{{ user.email }}</strong>!</p>
+        <p>Если кнопка не работает, скопируйте и вставьте следующую ссылку в адресную строку браузера:</p>
 
-            <p>Благодарим вас за регистрацию на нашем сайте. Для завершения регистрации
-               пожалуйста подтвердите ваш email адрес, нажав на кнопку ниже:</p>
-
-            <div style="text-align: center;">
-                <a href="{{ protocol }}://{{ domain }}{% url 'users:verify_email' token=token %}"
-                   class="button">
-                    Подтвердить email
-                </a>
-            </div>
-
-            <p>Если кнопка не работает, скопируйте и вставьте следующую ссылку в адресную строку браузера:</p>
-
-            <div class="link-box">
-                {{ protocol }}://{{ domain }}{% url 'users:verify_email' token=token %}
-            </div>
-
-            <div class="warning">
-                <strong>Важно:</strong> Ссылка действительна в течение 24 часов.
-            </div>
+        <div class="link-box">
+            {{ protocol }}://{{ domain }}{% url 'users:verify_email' token=token %}
         </div>
 
-        <div class="footer">
-            <p>Это автоматическое письмо, пожалуйста, не отвечайте на него.</p>
-            <p>Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.</p>
-            <p>© {% now "Y" %} BriefPost. Все права защищены.</p>
+        <div class="warning">
+            <strong>Важно:</strong> Ссылка действительна в течение 24 часов.
         </div>
     </div>
+
+    <div class="footer">
+        <p>Это автоматическое письмо, пожалуйста, не отвечайте на него.</p>
+        <p>Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.</p>
+        <p>© {% now "Y" %} BriefPost. Все права защищены.</p>
+    </div>
+</div>
 </body>
 </html>

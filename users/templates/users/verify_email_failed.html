@@ -67,28 +67,28 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="error-icon">✗</div>
-        <h1>Ошибка подтверждения email</h1>
+<div class="container">
+    <div class="error-icon">✗</div>
+    <h1>Ошибка подтверждения email</h1>
 
-        <div class="warning-box">
-            {% if message %}
-                {{ message }}
-            {% else %}
-                Ссылка для подтверждения недействительна или истекла.
-            {% endif %}
-        </div>
-
-        <p>Возможные причины:</p>
-        <ul style="text-align: left; color: #666;">
-            <li>Ссылка уже была использована ранее</li>
-            <li>Срок действия ссылки истек (24 часа)</li>
-            <li>Был изменен email адрес</li>
-        </ul>
-
-        <p>Что делать дальше:</p>
-        <a href="{% url 'users:login' %}" class="btn">Войти в аккаунт</a>
-        <a href="{% url 'users:register' %}" class="btn btn-secondary">Зарегистрироваться снова</a>
+    <div class="warning-box">
+        {% if message %}
+        {{ message }}
+        {% else %}
+        Ссылка для подтверждения недействительна или истекла.
+        {% endif %}
     </div>
+
+    <p>Возможные причины:</p>
+    <ul style="text-align: left; color: #666;">
+        <li>Ссылка уже была использована ранее</li>
+        <li>Срок действия ссылки истек (24 часа)</li>
+        <li>Был изменен email адрес</li>
+    </ul>
+
+    <p>Что делать дальше:</p>
+    <a href="{% url 'users:login' %}" class="btn">Войти в аккаунт</a>
+    <a href="{% url 'users:register' %}" class="btn btn-secondary">Зарегистрироваться снова</a>
+</div>
 </body>
 </html>

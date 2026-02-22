@@ -1,8 +1,10 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+
 from clients.models import Client
 from email_messages.models import EmailMessage
+
 from .models import Mailing
 
 
@@ -13,25 +15,30 @@ class MailingForm(forms.ModelForm):
         model = Mailing
         fields = ('name', 'message', 'clients', 'frequency', 'start_time', 'end_time')
         widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Введите название рассылки'
-            }),
-            'message': forms.Select(attrs={
-                'class': 'form-select',
-            }),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Введите название рассылки'}),
+            'message': forms.Select(
+                attrs={
+                    'class': 'form-select',
+                }
+            ),
             'clients': forms.CheckboxSelectMultiple(),
-            'frequency': forms.Select(attrs={
-                'class': 'form-select',
-            }),
-            'start_time': forms.DateTimeInput(attrs={
-                'class': 'form-control',
-                'type': 'datetime-local',
-            }),
-            'end_time': forms.DateTimeInput(attrs={
-                'class': 'form-control',
-                'type': 'datetime-local',
-            }),
+            'frequency': forms.Select(
+                attrs={
+                    'class': 'form-select',
+                }
+            ),
+            'start_time': forms.DateTimeInput(
+                attrs={
+                    'class': 'form-control',
+                    'type': 'datetime-local',
+                }
+            ),
+            'end_time': forms.DateTimeInput(
+                attrs={
+                    'class': 'form-control',
+                    'type': 'datetime-local',
+                }
+            ),
         }
         labels = {
             'name': 'Название рассылки',

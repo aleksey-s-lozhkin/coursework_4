@@ -1,10 +1,11 @@
-from django.db import models
 from django.conf import settings
-from django.utils import timezone
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils import timezone
+
 from clients.models import Client
 from email_messages.models import EmailMessage
-from django.core.cache import cache
 
 
 class Mailing(models.Model):
@@ -29,9 +30,7 @@ class Mailing(models.Model):
     ]
 
     name = models.CharField(
-        max_length=255,
-        verbose_name='Название рассылки',
-        help_text='Введите название для идентификации рассылки'
+        max_length=255, verbose_name='Название рассылки', help_text='Введите название для идентификации рассылки'
     )
 
     frequency = models.CharField(
@@ -39,35 +38,20 @@ class Mailing(models.Model):
         choices=FREQUENCY_CHOICES,
         verbose_name='Периодичность',
         default='daily',
-        help_text='Как часто отправлять рассылку'
+        help_text='Как часто отправлять рассылку',
     )
 
     start_time = models.DateTimeField(verbose_name='Дата и время начала отправки')
     end_time = models.DateTimeField(verbose_name='Дата и время окончания отправки')
 
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default=STATUS_CREATED,
-        verbose_name='Статус'
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_CREATED, verbose_name='Статус')
 
     message = models.ForeignKey(
-        EmailMessage,
-        on_delete=models.CASCADE,
-        related_name='mailings',
-        verbose_name='Сообщение'
+        EmailMessage, on_delete=models.CASCADE, related_name='mailings', verbose_name='Сообщение'
     )
-    clients = models.ManyToManyField(
-        Client,
-        related_name='mailings',
-        verbose_name='Клиенты'
-    )
+    clients = models.ManyToManyField(Client, related_name='mailings', verbose_name='Клиенты')
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='mailings',
-        verbose_name='Владелец'
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mailings', verbose_name='Владелец'
     )
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
@@ -137,6 +121,7 @@ class Mailing(models.Model):
 
 class MailingAttempt(models.Model):
     """Модель попытки рассылки"""
+
     STATUS_CHOICES = [
         ('success', 'Успешно'),
         ('failed', 'Не успешно'),

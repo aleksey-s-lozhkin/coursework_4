@@ -1,5 +1,6 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
+from django.core.management.base import BaseCommand
+
 from users.models import User  # Импортируем вашу модель User
 
 
@@ -7,11 +8,7 @@ class Command(BaseCommand):
     help = 'Создает группы и назначает права'
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Показать что будет сделано без реальных изменений'
-        )
+        parser.add_argument('--dry-run', action='store_true', help='Показать что будет сделано без реальных изменений')
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
@@ -47,10 +44,8 @@ class Command(BaseCommand):
         users_group, created = Group.objects.get_or_create(name='Regular Users')
         self.stdout.write(f"\nГруппа 'Regular Users': {'создана' if created else 'уже существует'}")
 
-        # Можно добавить базовые права для обычных пользователей
         if created and not dry_run:
-            # Например, право на создание своих рассылок
-            # (но они обычно есть по умолчанию)
+
             pass
 
         # === Статистика ===

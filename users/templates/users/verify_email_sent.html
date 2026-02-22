@@ -61,19 +61,19 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="success-icon">✓</div>
-        <h1>Проверьте вашу почту</h1>
-        <p>Мы отправили письмо с подтверждением на адрес:</p>
-        <div class="email-highlight">{{ email }}</div>
-        <p>Перейдите по ссылке в письме, чтобы подтвердить ваш email адрес.</p>
-        <p>Если письмо не пришло в течение 5 минут:</p>
-        <ul style="text-align: left; color: #666;">
-            <li>Проверьте папку "Спам"</li>
-            <li>Убедитесь, что вы правильно указали email</li>
-            <li>Попробуйте зарегистрироваться снова</li>
-        </ul>
-        <a href="{% url 'users:login' %}" class="btn">Вернуться на страницу входа</a>
-    </div>
+<div class="container">
+    <div class="success-icon">✓</div>
+    <h1>Проверьте вашу почту</h1>
+    <p>Мы отправили письмо с подтверждением на адрес:</p>
+    <div class="email-highlight">{{ email }}</div>
+    <p>Перейдите по ссылке в письме, чтобы подтвердить ваш email адрес.</p>
+    <p>Если письмо не пришло в течение 5 минут:</p>
+    <ul style="text-align: left; color: #666;">
+        <li>Проверьте папку "Спам"</li>
+        <li>Убедитесь, что вы правильно указали email</li>
+        <li>Попробуйте зарегистрироваться снова</li>
+    </ul>
+    <a href="{% url 'users:login' %}" class="btn">Вернуться на страницу входа</a>
+</div>
 </body>
 </html>

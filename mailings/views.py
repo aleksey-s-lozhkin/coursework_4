@@ -1,19 +1,19 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.core.cache import cache
 from django.views.decorators.cache import cache_page, never_cache
 from django.views.decorators.vary import vary_on_cookie
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
-from django.core.mail import send_mail
-from django.utils import timezone
-from django.conf import settings
-from django.db.models import Count, Q
-from django.db.models.functions import TruncMonth
 
 from .forms import MailingForm
 from .models import Mailing, MailingAttempt
@@ -21,6 +21,7 @@ from .models import Mailing, MailingAttempt
 
 class MailingListView(LoginRequiredMixin, ListView):
     """Список рассылок"""
+
     model = Mailing
     template_name = 'mailings/mailing_list.html'
     context_object_name = 'mailings'
@@ -41,8 +42,9 @@ class MailingListView(LoginRequiredMixin, ListView):
         if is_manager or self.request.user.is_superuser:
             queryset = Mailing.objects.all().select_related('owner', 'message').prefetch_related('clients')
         else:
-            queryset = Mailing.objects.filter(owner=self.request.user).select_related('message').prefetch_related(
-                'clients')
+            queryset = (
+                Mailing.objects.filter(owner=self.request.user).select_related('message').prefetch_related('clients')
+            )
 
         for mailing in queryset:
             mailing.update_status()
@@ -55,6 +57,7 @@ class MailingListView(LoginRequiredMixin, ListView):
 
 class MailingDetailView(LoginRequiredMixin, DetailView):
     """Детальная информация о рассылке"""
+
     model = Mailing
     template_name = 'mailings/mailing_detail.html'
     context_object_name = 'mailing'
@@ -106,11 +109,15 @@ class MailingDetailView(LoginRequiredMixin, DetailView):
             context['failed_count'] = attempts.filter(status='failed').count()
 
             if settings.CACHE_ENABLE:
-                cache.set(attempts_cache_key, {
-                    'attempts': context['attempts'],
-                    'success_count': context['success_count'],
-                    'failed_count': context['failed_count']
-                }, 60 * 2)
+                cache.set(
+                    attempts_cache_key,
+                    {
+                        'attempts': context['attempts'],
+                        'success_count': context['success_count'],
+                        'failed_count': context['failed_count'],
+                    },
+                    60 * 2,
+                )
 
         return context
 
@@ -118,6 +125,7 @@ class MailingDetailView(LoginRequiredMixin, DetailView):
 @method_decorator(never_cache, name='dispatch')
 class MailingCreateView(LoginRequiredMixin, CreateView):
     """Создание рассылки"""
+
     model = Mailing
     form_class = MailingForm
     template_name = 'mailings/mailing_form.html'
@@ -150,6 +158,7 @@ class MailingCreateView(LoginRequiredMixin, CreateView):
 @method_decorator(never_cache, name='dispatch')
 class MailingUpdateView(LoginRequiredMixin, UpdateView):
     """Редактирование рассылки"""
+
     model = Mailing
     form_class = MailingForm
     template_name = 'mailings/mailing_form.html'
@@ -194,6 +203,7 @@ class MailingUpdateView(LoginRequiredMixin, UpdateView):
 @method_decorator(never_cache, name='dispatch')
 class MailingDeleteView(LoginRequiredMixin, DeleteView):
     """Удаление рассылки"""
+
     model = Mailing
     template_name = 'mailings/mailing_confirm_delete.html'
     success_url = reverse_lazy('mailings:list')
@@ -269,8 +279,7 @@ class MailingStatsView(LoginRequiredMixin, DetailView):
         context['success_attempts'] = attempts.filter(status='success').count()
         context['failed_attempts'] = attempts.filter(status='failed').count()
         context['success_rate'] = (
-            (context['success_attempts'] / context['total_attempts'] * 100)
-            if context['total_attempts'] > 0 else 0
+            (context['success_attempts'] / context['total_attempts'] * 100) if context['total_attempts'] > 0 else 0
         )
 
         # Кэшируем статистику по клиентам
@@ -283,13 +292,15 @@ class MailingStatsView(LoginRequiredMixin, DetailView):
             client_stats = []
             for client in self.object.clients.all():
                 client_attempts = attempts.filter(client=client)
-                client_stats.append({
-                    'client': client,
-                    'total': client_attempts.count(),
-                    'success': client_attempts.filter(status='success').count(),
-                    'failed': client_attempts.filter(status='failed').count(),
-                    'last_attempt': client_attempts.order_by('-attempted_at').first()
-                })
+                client_stats.append(
+                    {
+                        'client': client,
+                        'total': client_attempts.count(),
+                        'success': client_attempts.filter(status='success').count(),
+                        'failed': client_attempts.filter(status='failed').count(),
+                        'last_attempt': client_attempts.order_by('-attempted_at').first(),
+                    }
+                )
             context['client_stats'] = client_stats
 
             if settings.CACHE_ENABLE:
@@ -304,6 +315,7 @@ class MailingStatsView(LoginRequiredMixin, DetailView):
 @method_decorator(vary_on_cookie, name='dispatch')
 class MailingStatsListView(LoginRequiredMixin, ListView):
     """Общая статистика по всем рассылкам пользователя"""
+
     model = Mailing
     template_name = 'mailings/mailing_stats_list.html'
     context_object_name = 'mailings'
@@ -315,8 +327,11 @@ class MailingStatsListView(LoginRequiredMixin, ListView):
         if is_manager or self.request.user.is_superuser:
             return Mailing.objects.all().select_related('message', 'owner').prefetch_related('attempts', 'clients')
         else:
-            return Mailing.objects.filter(owner=self.request.user).select_related('message').prefetch_related(
-                'attempts', 'clients')
+            return (
+                Mailing.objects.filter(owner=self.request.user)
+                .select_related('message')
+                .prefetch_related('attempts', 'clients')
+            )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -330,18 +345,20 @@ class MailingStatsListView(LoginRequiredMixin, ListView):
         context['success_attempts'] = attempts.filter(status='success').count()
         context['failed_attempts'] = attempts.filter(status='failed').count()
         context['success_rate'] = (
-            (context['success_attempts'] / context['total_attempts'] * 100)
-            if context['total_attempts'] > 0 else 0
+            (context['success_attempts'] / context['total_attempts'] * 100) if context['total_attempts'] > 0 else 0
         )
 
         # Статистика по месяцам
-        monthly_stats_raw = attempts.annotate(
-            month=TruncMonth('attempted_at')
-        ).values('month').annotate(
-            total=Count('id'),
-            success=Count('id', filter=Q(status='success')),
-            failed=Count('id', filter=Q(status='failed'))
-        ).order_by('month')
+        monthly_stats_raw = (
+            attempts.annotate(month=TruncMonth('attempted_at'))
+            .values('month')
+            .annotate(
+                total=Count('id'),
+                success=Count('id', filter=Q(status='success')),
+                failed=Count('id', filter=Q(status='failed')),
+            )
+            .order_by('month')
+        )
 
         monthly_stats = []
         for stat in monthly_stats_raw:
@@ -358,13 +375,15 @@ class MailingStatsListView(LoginRequiredMixin, ListView):
             success = mailing_attempts.filter(status='success').count()
             failed = mailing_attempts.filter(status='failed').count()
 
-            mailing_stats.append({
-                'mailing': mailing,
-                'total_attempts': total,
-                'success_attempts': success,
-                'failed_attempts': failed,
-                'success_rate': (success / total * 100) if total > 0 else 0
-            })
+            mailing_stats.append(
+                {
+                    'mailing': mailing,
+                    'total_attempts': total,
+                    'success_attempts': success,
+                    'failed_attempts': failed,
+                    'success_rate': (success / total * 100) if total > 0 else 0,
+                }
+            )
 
         context['mailing_stats'] = mailing_stats
 
@@ -413,14 +432,11 @@ class MailingSendView(LoginRequiredMixin, View):
                 failed_count += 1
 
             MailingAttempt.objects.create(
-                mailing=mailing,
-                client=client,
-                status=status,
-                server_response=server_response
+                mailing=mailing, client=client, status=status, server_response=server_response
             )
 
         if settings.CACHE_ENABLE:
-             cache.clear()
+            cache.clear()
 
         messages.success(request, f'Рассылка отправлена. Успешно: {success_count}, Ошибок: {failed_count}')
         return redirect('mailings:detail', pk=pk)
