@@ -1,5 +1,5 @@
+from django.core.exceptions import ValidationError
 from django import forms
-
 from .models import Client
 
 
@@ -15,18 +15,36 @@ class ClientForm(forms.ModelForm):
             'comment': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
+    def clean_email(self):
+        """Очистка и валидация email"""
+        email = self.cleaned_data.get('email')
+        if email:
+            # Приводим email к нижнему регистру
+            email = email.lower().strip()
+        return email
+
     def clean(self):
         cleaned_data = super().clean()
         email = cleaned_data.get('email')
 
-        # Проверяем, есть ли у текущего пользователя клиент с таким email
-        if email and self.instance.pk:
-            # При редактировании исключаем текущего клиента из проверки
-            if Client.objects.filter(email=email, owner=self.instance.owner).exclude(pk=self.instance.pk).exists():
-                raise ValidationError(f'У вас уже есть клиент с email {email}')
-        elif email and not self.instance.pk:
-            # При создании проверяем наличие
-            if Client.objects.filter(email=email, owner=self.initial.get('owner')).exists():
-                raise ValidationError(f'У вас уже есть клиент с email {email}')
+        if email:
+            # Получаем владельца
+            if self.instance.pk:
+                owner = self.instance.owner
+            else:
+                owner = self.initial.get('owner')
+
+            if owner:
+                # Проверяем существование клиента с таким email
+                existing = Client.objects.filter(
+                    email__iexact=email,
+                    owner=owner
+                )
+
+                if self.instance.pk:
+                    existing = existing.exclude(pk=self.instance.pk)
+
+                if existing.exists():
+                    raise ValidationError(f'У вас уже есть клиент с email {email}')
 
         return cleaned_data

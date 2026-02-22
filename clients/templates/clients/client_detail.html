@@ -60,7 +60,7 @@
         <tbody>
             {% for mailing in client.mailings.all %}
             <tr>
-                <td>{{ mailing.message.subject }}</td>  <!-- Удалите комментарий в HTML -->
+                <td>{{ mailing.message.subject }}</td>
                 <td>
                     {% if mailing.status == 'started' %}
                         <span class="badge bg-success">Запущена</span>

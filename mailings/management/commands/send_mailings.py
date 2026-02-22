@@ -57,7 +57,7 @@ class Command(BaseCommand):
         total_failed = 0
 
         for mailing in mailings:
-            self.stdout.write(f"\n📧 Рассылка: {mailing.name}")
+            self.stdout.write(f"\nРассылка: {mailing.name}")
             self.stdout.write(f"   ID: {mailing.id}")
             self.stdout.write(f"   Владелец: {mailing.owner.email}")
             self.stdout.write(f"   Тема: {mailing.message.subject}")
@@ -101,7 +101,7 @@ class Command(BaseCommand):
                     ).exists()
 
                     if already_sent:
-                        self.stdout.write(f"     ⏭️ {client.email} - уже отправлено сегодня")
+                        self.stdout.write(f"     {client.email} - уже отправлено сегодня")
                         continue
 
                     if not dry_run:

@@ -4,9 +4,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
-from django.views.decorators.cache import never_cache  # Убрали cache_page
+from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
-from django.core.cache import cache  # ИСПРАВЛЕНО!
+from django.core.cache import cache
 
 from .forms import ClientForm
 from .models import Client
@@ -62,7 +62,8 @@ class ClientDetailView(LoginRequiredMixin, DetailView):
             return self.handle_no_permission()
 
         client = self.get_object()
-        if not (request.user.is_manager or request.user.is_superuser or client.owner == request.user):
+        is_manager = request.user.is_manager or request.user.groups.filter(name='Managers').exists()
+        if not (is_manager or request.user.is_superuser or client.owner == request.user):
             messages.error(request, 'У вас нет прав для просмотра этого клиента.')
             return redirect('clients:list')
         return super().dispatch(request, *args, **kwargs)

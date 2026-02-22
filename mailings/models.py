@@ -1,10 +1,10 @@
-# mailings/models.py
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from clients.models import Client
 from email_messages.models import EmailMessage
+from django.core.cache import cache
 
 
 class Mailing(models.Model):
@@ -38,7 +38,7 @@ class Mailing(models.Model):
         max_length=20,
         choices=FREQUENCY_CHOICES,
         verbose_name='Периодичность',
-        default='daily',  # Значение по умолчанию
+        default='daily',
         help_text='Как часто отправлять рассылку'
     )
 
@@ -85,9 +85,7 @@ class Mailing(models.Model):
         return self.name
 
     def get_calculated_status(self):
-        """
-        Вычисляет актуальный статус на основе текущего времени
-        """
+        """Вычисляет актуальный статус на основе текущего времени"""
         now = timezone.now()
 
         # Если рассылка отключена менеджером, статус не меняется
@@ -102,9 +100,7 @@ class Mailing(models.Model):
             return self.STATUS_COMPLETED
 
     def update_status(self):
-        """
-        Обновляет статус в базе данных на основе текущего времени
-        """
+        """Обновляет статус в базе данных на основе текущего времени"""
         calculated_status = self.get_calculated_status()
 
         # Если статус изменился, обновляем его в базе
@@ -167,7 +163,7 @@ class MailingAttempt(models.Model):
             cache.delete(f'mailing_attempts_{self.pk}')
 
     def save(self, *args, **kwargs):
-        self.clear_cache()  # Очищаем кеш при сохранении
+        self.clear_cache()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):

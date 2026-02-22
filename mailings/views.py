@@ -31,9 +31,14 @@ class MailingListView(LoginRequiredMixin, ListView):
 
         cached_queryset = cache.get(cache_key)
         if cached_queryset and settings.CACHE_ENABLE:
+            for mailing in cached_queryset:
+                if mailing.update_status():
+                    mailing.save(update_fields=['status', 'updated_at'])
             return cached_queryset
 
-        if self.request.user.is_manager or self.request.user.is_superuser:
+        is_manager = self.request.user.is_manager or self.request.user.groups.filter(name='Managers').exists()
+
+        if is_manager or self.request.user.is_superuser:
             queryset = Mailing.objects.all().select_related('owner', 'message').prefetch_related('clients')
         else:
             queryset = Mailing.objects.filter(owner=self.request.user).select_related('message').prefetch_related(
@@ -76,7 +81,9 @@ class MailingDetailView(LoginRequiredMixin, DetailView):
             return self.handle_no_permission()
 
         mailing = self.get_object()
-        if not (request.user.is_manager or request.user.is_superuser or mailing.owner == request.user):
+        is_manager = request.user.is_manager or request.user.groups.filter(name='Managers').exists()
+
+        if not (is_manager or request.user.is_superuser or mailing.owner == request.user):
             messages.error(request, 'У вас нет прав для просмотра этой рассылки.')
             return redirect('mailings:list')
         return super().dispatch(request, *args, **kwargs)
@@ -219,7 +226,9 @@ class MailingDisableView(LoginRequiredMixin, View):
     """Отключение рассылки менеджером"""
 
     def dispatch(self, request, *args, **kwargs):
-        if not (request.user.is_manager or request.user.is_superuser):
+        is_manager = request.user.is_manager or request.user.groups.filter(name='Managers').exists()
+
+        if not (is_manager or request.user.is_superuser):
             messages.error(request, 'У вас нет прав для отключения рассылок.')
             return redirect('mailings:list')
         return super().dispatch(request, *args, **kwargs)
@@ -232,10 +241,7 @@ class MailingDisableView(LoginRequiredMixin, View):
         return redirect('mailings:detail', pk=pk)
 
 
-@method_decorator(cache_page(60 * 5), name='dispatch')
-@method_decorator(vary_on_cookie, name='dispatch')
 class MailingStatsView(LoginRequiredMixin, DetailView):
-    """Детальная статистика по конкретной рассылке"""
     model = Mailing
     template_name = 'mailings/mailing_stats_detail.html'
     context_object_name = 'mailing'
@@ -245,13 +251,18 @@ class MailingStatsView(LoginRequiredMixin, DetailView):
             return self.handle_no_permission()
 
         mailing = self.get_object()
-        if not (request.user.is_manager or request.user.is_superuser or mailing.owner == request.user):
+
+        is_manager = request.user.is_manager or request.user.groups.filter(name='Managers').exists()
+
+        if not (is_manager or request.user.is_superuser or mailing.owner == request.user):
             messages.error(request, 'У вас нет прав для просмотра статистики этой рассылки.')
             return redirect('mailings:list')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Всегда свежие попытки (не кэшируем)
         attempts = MailingAttempt.objects.filter(mailing=self.object)
 
         context['total_attempts'] = attempts.count()
@@ -262,18 +273,27 @@ class MailingStatsView(LoginRequiredMixin, DetailView):
             if context['total_attempts'] > 0 else 0
         )
 
-        # Статистика по клиентам
-        client_stats = []
-        for client in self.object.clients.all():
-            client_attempts = attempts.filter(client=client)
-            client_stats.append({
-                'client': client,
-                'total': client_attempts.count(),
-                'success': client_attempts.filter(status='success').count(),
-                'failed': client_attempts.filter(status='failed').count(),
-                'last_attempt': client_attempts.order_by('-attempted_at').first()
-            })
-        context['client_stats'] = client_stats
+        # Кэшируем статистику по клиентам
+        clients_cache_key = f'mailing_stats_clients_{self.object.pk}'
+        cached_clients = cache.get(clients_cache_key)
+
+        if cached_clients and settings.CACHE_ENABLE:
+            context['client_stats'] = cached_clients
+        else:
+            client_stats = []
+            for client in self.object.clients.all():
+                client_attempts = attempts.filter(client=client)
+                client_stats.append({
+                    'client': client,
+                    'total': client_attempts.count(),
+                    'success': client_attempts.filter(status='success').count(),
+                    'failed': client_attempts.filter(status='failed').count(),
+                    'last_attempt': client_attempts.order_by('-attempted_at').first()
+                })
+            context['client_stats'] = client_stats
+
+            if settings.CACHE_ENABLE:
+                cache.set(clients_cache_key, client_stats, 60 * 5)
 
         context['recent_attempts'] = attempts.order_by('-attempted_at')[:50]
 
@@ -290,7 +310,9 @@ class MailingStatsListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        if self.request.user.is_manager or self.request.user.is_superuser:
+        is_manager = self.request.user.is_manager or self.request.user.groups.filter(name='Managers').exists()
+
+        if is_manager or self.request.user.is_superuser:
             return Mailing.objects.all().select_related('message', 'owner').prefetch_related('attempts', 'clients')
         else:
             return Mailing.objects.filter(owner=self.request.user).select_related('message').prefetch_related(
@@ -355,7 +377,9 @@ class MailingSendView(LoginRequiredMixin, View):
     def post(self, request, pk):
         mailing = get_object_or_404(Mailing, pk=pk)
 
-        if not (request.user.is_manager or request.user.is_superuser or mailing.owner == request.user):
+        is_manager = request.user.is_manager or request.user.groups.filter(name='Managers').exists()
+
+        if not (is_manager or request.user.is_superuser or mailing.owner == request.user):
             messages.error(request, 'У вас нет прав для запуска этой рассылки.')
             return redirect('mailings:detail', pk=pk)
 
