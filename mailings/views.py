@@ -1,17 +1,22 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page, never_cache
+from django.views.decorators.vary import vary_on_cookie
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.conf import settings
-from django.db import models
+from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 
 from .forms import MailingForm
 from .models import Mailing, MailingAttempt
-from users.mixins import OwnerOrManagerMixin
 
 
 class MailingListView(LoginRequiredMixin, ListView):
@@ -22,16 +27,23 @@ class MailingListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        # Обновляем статус для всех рассылок в queryset
+        cache_key = f'mailings_queryset_{self.request.user.id}_{self.request.user.is_manager}'
+
+        cached_queryset = cache.get(cache_key)
+        if cached_queryset and settings.CACHE_ENABLE:
+            return cached_queryset
+
         if self.request.user.is_manager or self.request.user.is_superuser:
             queryset = Mailing.objects.all().select_related('owner', 'message').prefetch_related('clients')
         else:
             queryset = Mailing.objects.filter(owner=self.request.user).select_related('message').prefetch_related(
                 'clients')
 
-        # Обновляем статус для каждой рассылки
         for mailing in queryset:
             mailing.update_status()
+
+        if settings.CACHE_ENABLE:
+            cache.set(cache_key, queryset, 60 * 5)
 
         return queryset
 
@@ -43,13 +55,20 @@ class MailingDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'mailing'
 
     def get_object(self, queryset=None):
-        """
-        Переопределяем get_object для вызова update_status()
-        при каждом просмотре рассылки
-        """
+        cache_key = f'mailing_detail_{self.kwargs.get("pk")}'
+
+        cached_obj = cache.get(cache_key)
+        if cached_obj and settings.CACHE_ENABLE:
+            if cached_obj.update_status():  # Если статус изменился
+                cached_obj.save(update_fields=['status', 'updated_at'])  # Сохраняем в БД
+            return cached_obj
+
         obj = super().get_object(queryset)
-        # Обновляем статус при просмотре
         obj.update_status()
+
+        if settings.CACHE_ENABLE:
+            cache.set(cache_key, obj, 60 * 2)
+
         return obj
 
     def dispatch(self, request, *args, **kwargs):
@@ -64,12 +83,32 @@ class MailingDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['attempts'] = MailingAttempt.objects.filter(mailing=self.object)[:10]
-        context['success_count'] = MailingAttempt.objects.filter(mailing=self.object, status='success').count()
-        context['failed_count'] = MailingAttempt.objects.filter(mailing=self.object, status='failed').count()
+
+        # Кешируем попытки для этой рассылки
+        attempts_cache_key = f'mailing_attempts_{self.object.pk}'
+        cached_attempts = cache.get(attempts_cache_key)
+
+        if cached_attempts and settings.CACHE_ENABLE:
+            context['attempts'] = cached_attempts['attempts']
+            context['success_count'] = cached_attempts['success_count']
+            context['failed_count'] = cached_attempts['failed_count']
+        else:
+            attempts = MailingAttempt.objects.filter(mailing=self.object)
+            context['attempts'] = attempts[:10]
+            context['success_count'] = attempts.filter(status='success').count()
+            context['failed_count'] = attempts.filter(status='failed').count()
+
+            if settings.CACHE_ENABLE:
+                cache.set(attempts_cache_key, {
+                    'attempts': context['attempts'],
+                    'success_count': context['success_count'],
+                    'failed_count': context['failed_count']
+                }, 60 * 2)
+
         return context
 
 
+@method_decorator(never_cache, name='dispatch')
 class MailingCreateView(LoginRequiredMixin, CreateView):
     """Создание рассылки"""
     model = Mailing
@@ -84,17 +123,24 @@ class MailingCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
-        # Явно вызываем валидацию модели
+
         try:
             form.instance.full_clean()
         except ValidationError as e:
             form.add_error(None, e)
             return self.form_invalid(form)
 
+        if settings.CACHE_ENABLE:
+            cache.delete(f'mailings_queryset_{self.request.user.id}_True')
+            cache.delete(f'mailings_queryset_{self.request.user.id}_False')
+            cache.delete(f'home_stats_{self.request.user.id}_True')
+            cache.delete(f'home_stats_{self.request.user.id}_False')
+
         messages.success(self.request, 'Рассылка успешно создана.')
         return super().form_valid(form)
 
 
+@method_decorator(never_cache, name='dispatch')
 class MailingUpdateView(LoginRequiredMixin, UpdateView):
     """Редактирование рассылки"""
     model = Mailing
@@ -117,12 +163,19 @@ class MailingUpdateView(LoginRequiredMixin, UpdateView):
         return kwargs
 
     def form_valid(self, form):
-        # Явно вызываем валидацию модели
         try:
             form.instance.full_clean()
         except ValidationError as e:
             form.add_error(None, e)
             return self.form_invalid(form)
+
+        if settings.CACHE_ENABLE:
+            cache.delete(f'mailings_queryset_{self.request.user.id}_True')
+            cache.delete(f'mailings_queryset_{self.request.user.id}_False')
+            cache.delete(f'mailing_detail_{self.object.pk}')
+            cache.delete(f'mailing_attempts_{self.object.pk}')
+            cache.delete(f'home_stats_{self.request.user.id}_True')
+            cache.delete(f'home_stats_{self.request.user.id}_False')
 
         messages.success(self.request, 'Рассылка успешно обновлена.')
         return super().form_valid(form)
@@ -131,6 +184,7 @@ class MailingUpdateView(LoginRequiredMixin, UpdateView):
         return reverse('mailings:detail', kwargs={'pk': self.object.pk})
 
 
+@method_decorator(never_cache, name='dispatch')
 class MailingDeleteView(LoginRequiredMixin, DeleteView):
     """Удаление рассылки"""
     model = Mailing
@@ -148,6 +202,15 @@ class MailingDeleteView(LoginRequiredMixin, DeleteView):
         return super().dispatch(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
+
+        if settings.CACHE_ENABLE:
+            cache.delete(f'mailings_queryset_{request.user.id}_True')
+            cache.delete(f'mailings_queryset_{request.user.id}_False')
+            cache.delete(f'mailing_detail_{self.get_object().pk}')
+            cache.delete(f'mailing_attempts_{self.get_object().pk}')
+            cache.delete(f'home_stats_{request.user.id}_True')
+            cache.delete(f'home_stats_{request.user.id}_False')
+
         messages.success(request, 'Рассылка успешно удалена.')
         return super().delete(request, *args, **kwargs)
 
@@ -169,10 +232,12 @@ class MailingDisableView(LoginRequiredMixin, View):
         return redirect('mailings:detail', pk=pk)
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
+@method_decorator(vary_on_cookie, name='dispatch')
 class MailingStatsView(LoginRequiredMixin, DetailView):
-    """Статистика по конкретной рассылке (детальная)"""
+    """Детальная статистика по конкретной рассылке"""
     model = Mailing
-    template_name = 'mailings/mailing_stats_detail.html'  # Изменено имя шаблона
+    template_name = 'mailings/mailing_stats_detail.html'
     context_object_name = 'mailing'
 
     def dispatch(self, request, *args, **kwargs):
@@ -189,7 +254,6 @@ class MailingStatsView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         attempts = MailingAttempt.objects.filter(mailing=self.object)
 
-        # Основная статистика
         context['total_attempts'] = attempts.count()
         context['success_attempts'] = attempts.filter(status='success').count()
         context['failed_attempts'] = attempts.filter(status='failed').count()
@@ -211,12 +275,13 @@ class MailingStatsView(LoginRequiredMixin, DetailView):
             })
         context['client_stats'] = client_stats
 
-        # Последние 50 попыток
         context['recent_attempts'] = attempts.order_by('-attempted_at')[:50]
 
         return context
 
 
+@method_decorator(cache_page(60 * 10), name='dispatch')
+@method_decorator(vary_on_cookie, name='dispatch')
 class MailingStatsListView(LoginRequiredMixin, ListView):
     """Общая статистика по всем рассылкам пользователя"""
     model = Mailing
@@ -234,7 +299,6 @@ class MailingStatsListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Общая статистика
         if self.request.user.is_manager or self.request.user.is_superuser:
             attempts = MailingAttempt.objects.all()
         else:
@@ -248,10 +312,7 @@ class MailingStatsListView(LoginRequiredMixin, ListView):
             if context['total_attempts'] > 0 else 0
         )
 
-        # Статистика по месяцам с правильным процентом
-        from django.db.models.functions import TruncMonth
-        from django.db.models import Count, Q
-
+        # Статистика по месяцам
         monthly_stats_raw = attempts.annotate(
             month=TruncMonth('attempted_at')
         ).values('month').annotate(
@@ -260,7 +321,6 @@ class MailingStatsListView(LoginRequiredMixin, ListView):
             failed=Count('id', filter=Q(status='failed'))
         ).order_by('month')
 
-        # Добавляем процент к каждому месяцу
         monthly_stats = []
         for stat in monthly_stats_raw:
             stat['percentage'] = (stat['success'] / stat['total'] * 100) if stat['total'] > 0 else 0
@@ -295,23 +355,19 @@ class MailingSendView(LoginRequiredMixin, View):
     def post(self, request, pk):
         mailing = get_object_or_404(Mailing, pk=pk)
 
-        # Проверка прав доступа
         if not (request.user.is_manager or request.user.is_superuser or mailing.owner == request.user):
             messages.error(request, 'У вас нет прав для запуска этой рассылки.')
             return redirect('mailings:detail', pk=pk)
 
-        # Проверка статуса рассылки
         if mailing.status != Mailing.STATUS_STARTED:
             messages.error(request, 'Можно запускать только активные рассылки (статус "Запущена").')
             return redirect('mailings:detail', pk=pk)
 
-        # Проверка времени
         now = timezone.now()
         if not (mailing.start_time <= now <= mailing.end_time):
             messages.error(request, 'Рассылку можно запустить только в период между start_time и end_time')
             return redirect('mailings:detail', pk=pk)
 
-        # Отправка писем клиентам
         success_count = 0
         failed_count = 0
 
@@ -332,13 +388,15 @@ class MailingSendView(LoginRequiredMixin, View):
                 server_response = str(e)
                 failed_count += 1
 
-            # Создание записи о попытке
             MailingAttempt.objects.create(
                 mailing=mailing,
                 client=client,
                 status=status,
                 server_response=server_response
             )
+
+        if settings.CACHE_ENABLE:
+             cache.clear()
 
         messages.success(request, f'Рассылка отправлена. Успешно: {success_count}, Ошибок: {failed_count}')
         return redirect('mailings:detail', pk=pk)

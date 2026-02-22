@@ -1,6 +1,6 @@
 <div class="container">
     <div class="row g-2">
-        <!-- Колонка 1: О компании -->
+        <!-- Колонка 1: О компании (слева) -->
         <div class="col-md-3">
             <h6 class="text-white mb-1">{% block footer_company_title %}Компания{% endblock %}</h6>
             {% block footer_company_links %}
@@ -10,18 +10,16 @@
             {% endblock %}
         </div>
 
-        <!-- Колонка 2: Услуги -->
+        <!-- Колонка 2: Услуги (пустая) -->
         <div class="col-md-3">
-
         </div>
 
-        <!-- Колонка 3: Поддержка -->
+        <!-- Колонка 3: Поддержка (пустая) -->
         <div class="col-md-3">
-
         </div>
 
-        <!-- Колонка 4: Контакты -->
-        <div class="col-md-3">
+        <!-- Колонка 4: Контакты (по правому краю) -->
+        <div class="col-md-3 text-end">
             <h6 class="text-white mb-1">{% block footer_contacts_title %}Контакты{% endblock %}</h6>
             {% block footer_contacts %}
             <ul class="list-unstyled small text-white-50">

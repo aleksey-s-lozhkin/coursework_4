@@ -159,3 +159,17 @@ class MailingAttempt(models.Model):
 
     def __str__(self):
         return f"{self.mailing} - {self.client} - {self.get_status_display()}"
+
+    def clear_cache(self):
+        """Очищает кеш, связанный с рассылкой"""
+        if hasattr(settings, 'CACHE_ENABLE') and settings.CACHE_ENABLE:
+            cache.delete(f'mailing_detail_{self.pk}')
+            cache.delete(f'mailing_attempts_{self.pk}')
+
+    def save(self, *args, **kwargs):
+        self.clear_cache()  # Очищаем кеш при сохранении
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_cache()
+        super().delete(*args, **kwargs)

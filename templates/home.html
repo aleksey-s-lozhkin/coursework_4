@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
+{% load cache %}
 
 {% block title %}Главная{% endblock %}
 
 {% block content %}
 <h1 class="mb-4">Добро пожаловать, {{ user.email }}!</h1>
 
+{% cache 300 home_stats user.id %}
 <!-- Статистика рассылок -->
 <div class="row mb-4">
     <div class="col-md-3 mb-4">
@@ -164,4 +166,5 @@
         </div>
     </div>
 </div>
+{% endcache %}
 {% endblock %}

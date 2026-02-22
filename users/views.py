@@ -1,5 +1,9 @@
 from django.conf import settings
 from django.contrib import messages
+from django.core.cache import cache
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from django.views.generic import DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import (
@@ -20,7 +24,6 @@ from django.contrib.auth.models import Group
 from django.views import View
 from django.views.generic import ListView, RedirectView, TemplateView, UpdateView
 
-# Импорты из других приложений (только для HomeView)
 from clients.models import Client
 from mailings.models import Mailing, MailingAttempt
 
@@ -38,6 +41,7 @@ class RootRedirectView(RedirectView):
         return reverse_lazy('users:login')
 
 
+@method_decorator(vary_on_cookie, name='dispatch')
 class HomeView(LoginRequiredMixin, TemplateView):
     """Главная страница = личный кабинет"""
     template_name = 'home.html'
@@ -46,6 +50,15 @@ class HomeView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['user'] = self.request.user
+
+        # КЛЮЧ КЭША - определяем здесь!
+        cache_key = f'home_stats_data_{self.request.user.id}_{self.request.user.is_manager}'
+
+        # Пробуем получить данные из кэша
+        cached_data = cache.get(cache_key)
+        if cached_data and settings.CACHE_ENABLE:
+            context.update(cached_data)
+            return context
 
         now = timezone.now()
 
@@ -87,6 +100,19 @@ class HomeView(LoginRequiredMixin, TemplateView):
                 (context['success_attempts'] / context['total_attempts'] * 100)
                 if context['total_attempts'] > 0 else 0
             )
+
+        # Сохраняем данные в кэш на 5 минут
+        if settings.CACHE_ENABLE:
+            cache.set(cache_key, {
+                'total_mailings': context['total_mailings'],
+                'active_mailings': context['active_mailings'],
+                'total_clients': context['total_clients'],
+                'total_users': context.get('total_users', 0),
+                'total_attempts': context['total_attempts'],
+                'success_attempts': context['success_attempts'],
+                'failed_attempts': context['failed_attempts'],
+                'success_rate': context['success_rate'],
+            }, 60 * 5)
 
         return context
 
@@ -283,6 +309,12 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         """Сохраняет форму при успешной валидации"""
         form.save()
+
+        if settings.CACHE_ENABLE:
+            cache.delete(f'profile_view_{self.request.user.id}')
+            cache.delete(f'home_stats_{self.request.user.id}_True')
+            cache.delete(f'home_stats_{self.request.user.id}_False')
+
         messages.success(self.request, 'Профиль успешно обновлен!')
         return redirect(self.success_url)
 
@@ -295,6 +327,8 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         return self.render_to_response(self.get_context_data(form=form))
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
+@method_decorator(vary_on_cookie, name='dispatch')
 class ProfileView(LoginRequiredMixin, DetailView):
     """Контроллер для просмотра профиля пользователя"""
     model = Profile
