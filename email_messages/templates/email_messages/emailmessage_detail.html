@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ message.subject }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ message.subject }}</h1>
+    <div>
+        <a href="{% url 'email_messages:update' message.pk %}" class="btn btn-warning">Редактировать</a>
+        <a href="{% url 'email_messages:delete' message.pk %}" class="btn btn-danger">Удалить</a>
+        <a href="{% url 'email_messages:list' %}" class="btn btn-secondary">Назад к списку</a>
+        <a href="{% url 'users:home' %}" class="btn btn-outline-primary">На главную</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr>
+                <th style="width: 200px;">Тема</th>
+                <td>{{ message.subject }}</td>
+            </tr>
+            <tr>
+                <th>Текст сообщения</th>
+                <td>{{ message.body|linebreaks }}</td>
+            </tr>
+            <tr>
+                <th>Дата создания</th>
+                <td>{{ message.created_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+            <tr>
+                <th>Последнее обновление</th>
+                <td>{{ message.updated_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

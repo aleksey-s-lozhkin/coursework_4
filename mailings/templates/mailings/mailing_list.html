@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Рассылки{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Рассылки</h1>
+    <div>
+        <a href="{% url 'mailings:create' %}" class="btn btn-primary">Создать рассылку</a>
+        <a href="{% url 'users:home' %}" class="btn btn-outline-primary">На главную</a>  <!-- Добавлено -->
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Название</th>
+            <th>Статус</th>
+            <th>Периодичность</th>
+            <th>Клиентов</th>
+            {% if user.is_manager %}
+            <th>Владелец</th>
+            {% endif %}
+            <th>Дата создания</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for mailing in mailings %}
+        <tr>
+            <td>{{ mailing.name }}</td>
+            <td>
+                {% if mailing.status == 'started' %}
+                <span class="badge bg-success">Запущена</span>
+                {% elif mailing.status == 'completed' %}
+                <span class="badge bg-secondary">Завершена</span>
+                {% elif mailing.status == 'disabled' %}
+                <span class="badge bg-danger">Отключена</span>
+                {% else %}
+                <span class="badge bg-warning">Создана</span>
+                {% endif %}
+            </td>
+            <td>{{ mailing.get_frequency_display }}</td>
+            <td>{{ mailing.clients.count }}</td>
+            {% if user.is_manager %}
+            <td>{{ mailing.owner.email }}</td>
+            {% endif %}
+            <td>{{ mailing.created_at|date:"d.m.Y H:i" }}</td>
+            <td>
+                <a href="{% url 'mailings:detail' mailing.pk %}" class="btn btn-sm btn-info">Просмотр</a>
+                {% if mailing.owner == user %}
+                <a href="{% url 'mailings:update' mailing.pk %}" class="btn btn-sm btn-warning">Редактировать</a>
+                <a href="{% url 'mailings:delete' mailing.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+                {% endif %}
+                {% if user.is_manager and mailing.status == 'started' %}
+                <form method="post" action="{% url 'mailings:disable' mailing.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Отключить рассылку?')">Отключить
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="{% if user.is_manager %}7{% else %}6{% endif %}" class="text-center">Нет рассылок</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if is_paginated %}
+<nav>
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page=1">&laquo; Первая</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a></li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя &raquo;</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

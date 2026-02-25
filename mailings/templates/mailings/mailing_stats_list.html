@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Общая статистика{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Общая статистика</h1>
+    <a href="{% url 'users:home' %}" class="btn btn-outline-primary">На главную</a>
+</div>
+
+<!-- Общие показатели -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Всего попыток</h5>
+                <p class="card-text display-4">{{ total_attempts }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Успешных</h5>
+                <p class="card-text display-4">{{ success_attempts }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Неуспешных</h5>
+                <p class="card-text display-4">{{ failed_attempts }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Успешность</h5>
+                <p class="card-text display-4">{{ success_rate|floatformat:1 }}%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика по месяцам -->
+{% if monthly_stats %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Статистика по месяцам</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Месяц</th>
+                        <th>Всего</th>
+                        <th>Успешно</th>
+                        <th>Неуспешно</th>
+                        <th>Успешность</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in monthly_stats %}
+                    <tr>
+                        <td>{{ stat.month|date:"F Y" }}</td>
+                        <td>{{ stat.total }}</td>
+                        <td class="text-success">{{ stat.success }}</td>
+                        <td class="text-danger">{{ stat.failed }}</td>
+                        <td>{{ stat.percentage|floatformat:1 }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Статистика по рассылкам -->
+<h2>Статистика по рассылкам</h2>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Рассылка</th>
+                <th>Статус</th>
+                <th>Клиентов</th>
+                <th>Всего попыток</th>
+                <th>Успешно</th>
+                <th>Неуспешно</th>
+                <th>Успешность</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in mailing_stats %}
+            <tr>
+                <td>{{ stat.mailing.name }}</td>
+                <td>
+                    {% if stat.mailing.status == 'started' %}
+                        <span class="badge bg-success">Запущена</span>
+                    {% elif stat.mailing.status == 'completed' %}
+                        <span class="badge bg-secondary">Завершена</span>
+                    {% elif stat.mailing.status == 'disabled' %}
+                        <span class="badge bg-danger">Отключена</span>
+                    {% else %}
+                        <span class="badge bg-warning">Создана</span>
+                    {% endif %}
+                </td>
+                <td>{{ stat.mailing.clients.count }}</td>
+                <td>{{ stat.total_attempts }}</td>
+                <td class="text-success">{{ stat.success_attempts }}</td>
+                <td class="text-danger">{{ stat.failed_attempts }}</td>
+                <td>{{ stat.success_rate|floatformat:1 }}%</td>
+                <td>
+                    <a href="{% url 'mailings:stats' stat.mailing.pk %}" class="btn btn-sm btn-info">
+                        Детально
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center">Нет данных</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if is_paginated %}
+<nav>
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page=1">&laquo; Первая</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a></li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя &raquo;</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

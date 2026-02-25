@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Редактирование рассылки{% else %}Новая рассылка{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">{% if object %}Редактирование рассылки{% else %}Новая рассылка{% endif %}</h3>
+            </div>
+            <div class="card-body">
+                <!-- Отображение общих ошибок формы -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label fw-bold">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+
+                        {% if field.name == 'clients' %}
+                        <!-- Специальное отображение для чекбоксов клиентов -->
+                        <div class="border rounded p-3 bg-light">
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="checkAll()">
+                                    ✓ Выбрать всех
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="uncheckAll()">
+                                    ✗ Снять всех
+                                </button>
+                            </div>
+
+                            <!-- Одна колонка вместо двух -->
+                            <div style="max-height: 400px; overflow-y: auto;">
+                                {% for choice in field %}
+                                <div class="mb-2">
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            {% if field.help_text %}
+                            <div class="mt-2 text-muted small"></div>
+                            {% endif %}
+                        </div>
+
+                        {% elif field.name == 'frequency' %}
+                        <!-- Отображение для периодичности -->
+                        {{ field }}
+
+                        {% else %}
+                        <!-- Обычное отображение для остальных полей -->
+                        {{ field }}
+                        {% endif %}
+
+                        {% if field.errors %}
+                        {% for error in field.errors %}
+                        <div class="alert alert-danger mt-2 py-2">{{ error }}</div>
+                        {% endfor %}
+                        {% endif %}
+
+                        {% if field.help_text and field.name != 'clients' %}
+                        <div class="form-text text-muted small">{{ field.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            {% if object %}Сохранить{% else %}Создать{% endif %}
+                        </button>
+                        <div>
+                            <a href="{% url 'mailings:list' %}" class="btn btn-secondary">К списку рассылок</a>
+                            <a href="{% url 'users:home' %}" class="btn btn-outline-primary">На главную</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function checkAll() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][name="clients"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    function uncheckAll() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][name="clients"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+</script>
+
+{% endblock %}

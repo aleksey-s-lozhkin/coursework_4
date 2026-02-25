@@ -1,0 +1,51 @@
+{% load static %}
+
+<header class="bg-white shadow-sm">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-between py-3">
+            <a href="/" class="d-flex align-items-center text-dark text-decoration-none">
+                <img src="{% static 'images/img.png' %}" alt="BriefPost" height="32" class="me-2">
+                <span class="fs-4 fw-bold">BriefPost</span>
+            </a>
+
+            {% block header_right %}
+            <div class="d-flex align-items-center gap-3">
+                {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle rounded-pill px-4" type="button" id="profileDropdown" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>
+                            {{ user.get_username|default:user.email|truncatechars:20 }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'users:profile' %}">
+                                    <i class="bi bi-person me-2"></i>Мой профиль
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'users:profile-edit' %}">
+                                    <i class="bi bi-gear me-2"></i>Настройки
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'users:logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Выйти
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'users:login' %}" class="btn btn-outline-primary rounded-pill px-4">Вход</a>
+                        <a href="{% url 'users:register' %}" class="btn btn-primary rounded-pill px-4">Регистрация</a>
+                    </div>
+                {% endif %}
+            </div>
+            {% endblock %}
+        </div>
+    </div>
+</header>
